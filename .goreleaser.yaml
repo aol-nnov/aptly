@@ -1,0 +1,58 @@
+# This is an example .goreleaser.yml file with some sensible defaults.
+# Make sure to check the documentation at https://goreleaser.com
+
+# The lines below are called `modelines`. See `:help modeline`
+# Feel free to remove those if you don't want/need to use them.
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+
+version: 2
+
+before:
+  hooks:
+    - go mod verify
+    - go mod tidy -v
+    - go generate ./...
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - "amd64"
+      - "arm"
+      - "arm64"
+
+nfpms:
+  - package_name: aptly-server
+    file_name_template: "{{ .Format }}/{{ .ConventionalFileName }}"
+    maintainer: "Package Maintainer <pkg-maint@nn.lotes-tm.ru>"
+    description: "Aptly - the deb repository server"
+    formats:
+      - deb
+    contents:
+      - src: debian/aptly.conf
+        dst: etc/
+      - src: debian/aptly-api.default
+        dst: etc/default/aptly-api
+      - src: debian/aptly-api.service
+        dst: usr/lib/systemd/system/
+      - src: man/aptly.1
+        dst: usr/share/man/man1/aptly.1
+    scripts:
+      postinstall: debian/aptly-api.postinst
+
+archives:
+  - format: binary
+
+changelog:
+  sort: desc
+  abbrev: 7
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+release:
+  disable: true
