@@ -68,3 +68,5 @@ debian/aptly-dbg.substvars
 debian/aptly-dbg/
 
 docs/
+
+dist/
