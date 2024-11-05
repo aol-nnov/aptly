@@ -71,7 +71,7 @@ func NewPublishedStorage(username string, password string, authURL string, tenan
 		UserName:       username,
 		ApiKey:         password,
 		AuthUrl:        authURL,
-		UserAgent:      "aptly/" + aptly.Version,
+		UserAgent:      "aptly/" + aptly.Version.String(),
 		Tenant:         tenant,
 		TenantId:       tenantID,
 		Domain:         domain,

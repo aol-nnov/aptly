@@ -11,7 +11,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aptly-dev/aptly/aptly"
 	"github.com/aptly-dev/aptly/cmd"
 )
 
@@ -46,11 +45,6 @@ var _ = flag.String("sort", "false", "sort")
 var _ = flag.Bool("json", false, "json")
 
 func TestRunMain(t *testing.T) {
-	if Version == "" {
-		Version = "unknown"
-	}
-
-	aptly.Version = Version
 
 	args := filterOutTestArgs(os.Args[1:])
 	root := cmd.RootCommand()

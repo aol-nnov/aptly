@@ -1,6 +1,6 @@
 from api_lib import APITest
 import os
-
+import json
 
 class VersionAPITest(APITest):
     """
@@ -8,4 +8,6 @@ class VersionAPITest(APITest):
     """
 
     def check(self):
-        self.check_equal(self.get("/api/version").json(), {'Version': os.environ['APTLY_VERSION']})
+        actual = json.dumps(self.get("/api/version").json(), sort_keys=True)
+        expected = json.dumps({'Commit': os.environ['APTLY_COMMIT'], 'Version': os.environ['APTLY_VERSION']}, sort_keys=True)
+        self.check_equal(actual, expected)

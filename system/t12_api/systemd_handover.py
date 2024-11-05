@@ -4,6 +4,7 @@ import urllib.parse
 import urllib.request
 import os
 import os.path
+import json
 
 from lib import BaseTest
 
@@ -45,4 +46,6 @@ class SystemdAPIHandoverTest(BaseTest):
             return
         session = requests_unixsocket.Session()
         r = session.get('http+unix://%s/api/version' % urllib.parse.quote(self.socket_path, safe=''))
-        self.check_equal(r.json(), {'Version': os.environ['APTLY_VERSION']})
+        actual = json.dumps(r.json(), sort_keys=True)
+        expected = json.dumps({'Commit': os.environ['APTLY_COMMIT'], 'Version': os.environ['APTLY_VERSION']}, sort_keys=True)
+        self.check_equal(actual, expected)

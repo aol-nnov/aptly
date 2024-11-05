@@ -77,7 +77,7 @@ type metricsCollectorRegistrar struct {
 
 func (r *metricsCollectorRegistrar) Register(router *gin.Engine) {
 	if !r.hasRegistered {
-		apiVersionGauge.WithLabelValues(aptly.Version, runtime.Version()).Set(1)
+		apiVersionGauge.WithLabelValues(aptly.Version.String(), runtime.Version()).Set(1)
 		router.Use(instrumentHandlerInFlight(apiRequestsInFlightGauge, getBasePath))
 		router.Use(instrumentHandlerCounter(apiRequestsTotalCounter, getBasePath))
 		router.Use(instrumentHandlerRequestSize(apiRequestSizeSummary, getBasePath))

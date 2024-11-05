@@ -1,11 +1,9 @@
 GOPATH=$(shell go env GOPATH)
-VERSION=$(shell make -s version)
-PYTHON?=python3
-BINPATH?=$(GOPATH)/bin
-GOLANGCI_LINT_VERSION=v1.54.1  # version supporting go 1.19
-COVERAGE_DIR?=$(shell mktemp -d)
 GOOS=$(shell go env GOHOSTOS)
 GOARCH=$(shell go env GOHOSTARCH)
+PYTHON?=python3
+BINPATH?=$(GOPATH)/bin
+COVERAGE_DIR?=$(shell mktemp -d)
 
 ifdef CAPTURE
 	CAPTURE_ARGS := --capture
@@ -15,10 +13,8 @@ help:  ## Print this help
 	@grep -E '^[a-zA-Z][a-zA-Z0-9_-]*:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 prepare:  ## Install go module dependencies
-	# Prepare go modules
 	go mod verify
 	go mod tidy -v
-	# Generate VERSION file
 	go generate
 
 releasetype:  # Print release type: ci (on any branch/commit), release (on a tag)
@@ -31,17 +27,6 @@ releasetype:  # Print release type: ci (on any branch/commit), release (on a tag
 		fi ; \
 	fi ; \
 	echo $$reltype
-
-version:  ## Print aptly version
-	@ci="" ; \
-	if [ "`make -s releasetype`" = "ci" ]; then \
-		ci=`TZ=UTC git show -s --format='+%cd.%h' --date=format-local:'%Y%m%d%H%M%S'`; \
-	fi ; \
-	if which dpkg-parsechangelog > /dev/null 2>&1; then \
-		echo `dpkg-parsechangelog -S Version`$$ci; \
-	else \
-		echo `grep ^aptly -m1  debian/changelog | sed 's/.*(\([^)]\+\)).*/\1/'`$$ci ; \
-	fi
 
 etcd-install:
 	# Install etcd
@@ -135,8 +120,14 @@ man:  ## Create man pages
 clean:  ## remove local build and module cache
 	# Clean all generated and build files
 	test -d .go/ && chmod u+w -R .go/ && rm -rf .go/ || true
-	rm -rf build/ obj-*-linux-gnu* tmp/
-	rm -f unit.out aptly.test VERSION docs/docs.go docs/swagger.json docs/swagger.yaml docs/swagger.conf
+	rm -rf build/ obj-*-linux-gnu* tmp/ dist/
+	rm -f unit.out \
+		aptly.test \
+		internal/xversion.go \
+		docs/docs.go \
+		docs/swagger.json \
+		docs/swagger.yaml \
+		docs/swagger.conf
 	find system/ -type d -name __pycache__ -exec rm -rf {} \; 2>/dev/null || true
 
-.PHONY: help man prepare swagger version binaries build clean releasetype dpkg serve flake8 docker-image docker-shell
+.PHONY: help man prepare swagger binaries build clean releasetype dpkg serve flake8 docker-image docker-shell
