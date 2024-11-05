@@ -12,6 +12,7 @@ before:
   hooks:
     - go mod verify
     - go mod tidy -v
+    - go run github.com/golangci/golangci-lint/cmd/golangci-lint run
     - go generate ./...
 
 builds:
@@ -45,7 +46,17 @@ nfpms:
       postinstall: debian/aptly-api.postinst
 
 archives:
-  - format: binary
+  - format: tar.gz
+    wrap_in_directory: true
+    files:
+      - README.rst
+      - LICENSE
+      - AUTHORS
+      - man/aptly.1
+      - src: completion.d/aptly
+        dst: completion/bash_completion.d/aptly
+      - src: completion.d/_aptly
+        dst: completion/zsh/vendor-completions/aptly
 
 changelog:
   sort: desc
