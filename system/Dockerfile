@@ -32,4 +32,6 @@ RUN cd /var/lib/aptly; git clone https://github.com/aptly-dev/aptly-fixture-db.g
 RUN cd /var/lib/aptly; git clone https://github.com/aptly-dev/aptly-fixture-pool.git
 RUN cd /var/lib/aptly; curl -O http://repo.aptly.info/system-tests/etcd.db.xz && xz -d etcd.db.xz
 
+RUN git config --global --add safe.directory /work/src
+
 ENTRYPOINT [ "/work/src/system/docker-wrapper" ]

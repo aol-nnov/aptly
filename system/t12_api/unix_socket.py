@@ -4,6 +4,7 @@ import os
 import urllib.error
 import urllib.parse
 import urllib.request
+import json
 
 from lib import BaseTest
 from testout import TestOut
@@ -46,4 +47,6 @@ class UnixSocketAPITest(BaseTest):
         r = session.get('http+unix://%s/api/version' % urllib.parse.quote(UnixSocketAPITest.socket_path, safe=''))
         # Just needs to come back, we actually don't care much about the code.
         # Only needs to verify that the socket is actually responding.
-        self.check_equal(r.json(), {'Version': os.environ['APTLY_VERSION']})
+        actual = json.dumps(r.json(), sort_keys=True)
+        expected = json.dumps({'Commit': os.environ['APTLY_COMMIT'], 'Version': os.environ['APTLY_VERSION']}, sort_keys=True)
+        self.check_equal(actual, expected)

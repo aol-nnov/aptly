@@ -185,7 +185,8 @@ def run(include_long_tests=False, capture_results=False, tests=None, filters=Non
 
 if __name__ == "__main__":
     try:
-        os.environ['APTLY_VERSION'] = os.popen("make -s version").read().strip()
+        os.environ['APTLY_VERSION'] = os.popen("git describe --tag").read().strip()[1:]
+        os.environ['APTLY_COMMIT'] = os.popen("git show-ref --hash v" + os.environ['APTLY_VERSION']).read().strip()
     except BaseException as e:
         print("Failed to capture current version: ", e)
 

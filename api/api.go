@@ -25,7 +25,7 @@ import (
 
 // GET /api/version
 func apiVersion(c *gin.Context) {
-	c.JSON(200, gin.H{"Version": aptly.Version})
+	c.JSON(200, aptly.Version)
 }
 
 // GET /api/ready

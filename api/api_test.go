@@ -8,11 +8,14 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"reflect"
+	"regexp"
 	"strings"
 	"testing"
 
 	"github.com/aptly-dev/aptly/aptly"
 	ctx "github.com/aptly-dev/aptly/context"
+	"github.com/aptly-dev/aptly/internal"
 	"github.com/gin-gonic/gin"
 
 	"github.com/smira/flag"
@@ -50,7 +53,7 @@ func createTestConfig() *os.File {
 }
 
 func (s *ApiSuite) setupContext() error {
-	aptly.Version = "testVersion"
+
 	file := createTestConfig()
 	if nil == file {
 		return fmt.Errorf("unable to create the test configuration file")
@@ -110,7 +113,11 @@ func (s *ApiSuite) TestGetVersion(c *C) {
 	response, err := s.HTTPRequest("GET", "/api/version", nil)
 	c.Assert(err, IsNil)
 	c.Check(response.Code, Equals, 200)
-	c.Check(response.Body.String(), Matches, "{\"Version\":\""+aptly.Version+"\"}")
+
+	var actual internal.VersionInfo
+	c.Assert(json.Unmarshal(response.Body.Bytes(), &actual), IsNil)
+
+	c.Check(reflect.DeepEqual(actual, aptly.Version), Equals, true)
 }
 
 func (s *ApiSuite) TestGetReadiness(c *C) {
@@ -138,7 +145,8 @@ func (s *ApiSuite) TestGetMetrics(c *C) {
 	c.Check(b, Matches, ".*# TYPE aptly_api_http_response_size_bytes summary.*")
 	c.Check(b, Matches, ".*# TYPE aptly_api_http_request_duration_seconds summary.*")
 	c.Check(b, Matches, ".*# TYPE aptly_build_info gauge.*")
-	c.Check(b, Matches, ".*aptly_build_info.*version=\"testVersion\".*")
+	c.Check(b, Matches, ".*aptly_build_info.*,version=\""+regexp.QuoteMeta(aptly.Version.String())+"\".*")
+
 }
 
 func (s *ApiSuite) TestRepoCreate(c *C) {

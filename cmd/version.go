@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/aptly-dev/aptly/aptly"
 	"github.com/smira/commander"
 )
@@ -13,7 +11,7 @@ func aptlyVersion(cmd *commander.Command, args []string) error {
 		return commander.ErrCommandError
 	}
 
-	fmt.Printf("aptly version: %s\n", aptly.Version)
+	aptly.Version.Print()
 	return nil
 }
 

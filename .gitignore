@@ -69,3 +69,4 @@ debian/aptly-dbg/
 
 docs/
 dist
+/internal/xversion.go

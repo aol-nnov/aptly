@@ -1,1 +1,2 @@
+/internal/version.go export-subst
 . !text !filter !merge !diff
