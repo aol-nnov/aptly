@@ -1,3 +1,4 @@
+//go:generate go run github.com/swaggo/swag/cmd/swag init --markdownFiles docs
 package main
 
 import (

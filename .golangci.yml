@@ -1,16 +1,15 @@
 run:
   tests: false
 
-
 linters:
   disable-all: true
   enable:
-   - goconst
-   - gofmt
-   - goimports
-   - govet
-   - ineffassign
-   - misspell
-   - revive
-   - staticcheck
-   - vetshadow
+    - goconst
+    - gofmt
+    - goimports
+    - govet
+    - ineffassign
+    - misspell
+    - revive
+    - staticcheck
+    - govet

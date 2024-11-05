@@ -43,14 +43,6 @@ version:  ## Print aptly version
 		echo `grep ^aptly -m1  debian/changelog | sed 's/.*(\([^)]\+\)).*/\1/'`$$ci ; \
 	fi
 
-swagger-install:
-	# Install swag
-	@test -f $(BINPATH)/swag || GOOS=linux GOARCH=amd64 go install github.com/swaggo/swag/cmd/swag@latest
-
-swagger: swagger-install
-	# Generate swagger docs
-	@PATH=$(BINPATH)/:$(PATH) swag init --markdownFiles docs
-
 etcd-install:
 	# Install etcd
 	test -d /srv/etcd || system/t13_etcd/install-etcd.sh
@@ -59,21 +51,16 @@ flake8:  ## run flake8 on system test python files
 	flake8 system/
 
 lint:
-	# Install golangci-lint
-	@test -f $(BINPATH)/golangci-lint || go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
-	# Running lint
-	@PATH=$(BINPATH)/:$(PATH) golangci-lint run
+	go run github.com/golangci/golangci-lint/cmd/golangci-lint run
 
-
-build: prepare swagger  ## Build aptly
+build: prepare  ## Build aptly
 	go build -o build/aptly
 
-install:
+install: build
 	@echo "\e[33m\e[1mBuilding aptly ...\e[0m"
-	go generate
 	@out=`mktemp`; if ! go install -v > $$out 2>&1; then cat $$out; rm -f $$out; echo "\nBuild failed\n"; exit 1; else rm -f $$out; fi
 
-test: prepare swagger etcd-install  ## Run unit tests
+test: prepare etcd-install  ## Run unit tests
 	@echo "\e[33m\e[1mStarting etcd ...\e[0m"
 	@mkdir -p /tmp/etcd-data; system/t13_etcd/start-etcd.sh > /tmp/etcd-data/etcd.log 2>&1 &
 	@echo "\e[33m\e[1mRunning go test ...\e[0m"
@@ -83,7 +70,7 @@ test: prepare swagger etcd-install  ## Run unit tests
 	@rm -f /tmp/etcd-data/etcd.log
 	@ret=`cat .unit-test.ret`; if [ "$$ret" = "0" ]; then echo "\n\e[32m\e[1mUnit Tests SUCCESSFUL\e[0m"; else echo "\n\e[31m\e[1mUnit Tests FAILED\e[0m"; fi; rm -f .unit-test.ret; exit $$ret
 
-system-test: prepare swagger etcd-install  ## Run system tests
+system-test: prepare etcd-install  ## Run system tests
 	# build coverage binary
 	go test -v -coverpkg="./..." -c -tags testruncli
 	# Download fixture-db, fixture-pool, etcd.db
@@ -97,13 +84,12 @@ bench:
 	@echo "\e[33m\e[1mRunning benchmark ...\e[0m"
 	go test -v ./deb -run=nothing -bench=. -benchmem
 
-serve: prepare swagger-install  ## Run development server (auto recompiling)
-	test -f $(BINPATH)/air || go install github.com/air-verse/air@v1.52.3
+serve: prepare  ## Run development server (auto recompiling)
 	cp debian/aptly.conf ~/.aptly.conf
 	sed -i /enableSwaggerEndpoint/s/false/true/ ~/.aptly.conf
-	PATH=$(BINPATH):$$PATH air -build.pre_cmd 'swag init -q --markdownFiles docs' -build.exclude_dir docs,system,debian,pgp/keyrings,pgp/test-bins,completion.d,man,deb/testdata,console,_man,cmd,systemd,obj-x86_64-linux-gnu -- api serve -listen 0.0.0.0:3142
+	go run github.com/air-verse/air -build.pre_cmd 'swag init -q --markdownFiles docs' -build.exclude_dir docs,system,debian,pgp/keyrings,pgp/test-bins,completion.d,man,deb/testdata,console,_man,cmd,systemd,obj-x86_64-linux-gnu -- api serve -listen 0.0.0.0:3142
 
-dpkg: prepare swagger  ## Build debian packages
+dpkg: prepare ## Build debian packages
 	@test -n "$(DEBARCH)" || (echo "please define DEBARCH"; exit 1)
 	# set debian version
 	@if [ "`make -s releasetype`" = "ci" ]; then  \
@@ -123,24 +109,8 @@ dpkg: prepare swagger  ## Build debian packages
 	mkdir -p build && mv ../*.deb build/ ; \
 	cd build && ls -l *.deb
 
-binaries: prepare swagger  ## Build binary releases (FreeBSD, MacOS, Linux tar)
-	# build aptly
-	GOOS=$(GOOS) GOARCH=$(GOARCH) go build -o build/tmp/aptly -ldflags='-extldflags=-static'
-	# install
-	@mkdir -p build/tmp/man build/tmp/completion/bash_completion.d build/tmp/completion/zsh/vendor-completions
-	@cp man/aptly.1 build/tmp/man/
-	@cp completion.d/aptly build/tmp/completion/bash_completion.d/
-	@cp completion.d/_aptly build/tmp/completion/zsh/vendor-completions/
-	@cp README.rst LICENSE AUTHORS build/tmp/
-	@gzip -f build/tmp/man/aptly.1
-	@path="aptly_$(VERSION)_$(GOOS)_$(GOARCH)"; \
-	rm -rf "build/$$path"; \
-	mv build/tmp build/"$$path"; \
-	rm -rf build/tmp; \
-	cd build; \
-	zip -r "$$path".zip "$$path" > /dev/null \
-		&& echo "Built build/$${path}.zip"; \
-	rm -rf "$$path"
+binaries: prepare ## Build binary releases (FreeBSD, MacOS, Linux tar)
+	goreleaser --clean
 
 docker-image:  ## Build aptly-dev docker image
 	@docker build --build-arg USER_ID=$(shell id -u) --build-arg GROUP_ID=$(shell id -g) -f system/Dockerfile . -t aptly-dev
